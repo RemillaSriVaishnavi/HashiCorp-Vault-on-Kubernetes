@@ -1,0 +1,50 @@
+server:
+  replicas: 3
+
+  ha:
+    enabled: true
+    raft:
+      enabled: true
+      setNodeId: true
+
+  dataStorage:
+    enabled: true
+    storageClass: standard
+    size: 10Gi
+
+  auditStorage:
+    enabled: true
+    storageClass: standard
+    size: 5Gi
+
+  service:
+    type: ClusterIP
+
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  readinessProbe:
+    enabled: true
+    path: /v1/sys/health?standbyok=true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+
+  livenessProbe:
+    enabled: true
+    path: /v1/sys/health?standbyok=true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+  dev:
+    enabled: false
+
+injector:
+  enabled: true
+
+ui:
+  enabled: true

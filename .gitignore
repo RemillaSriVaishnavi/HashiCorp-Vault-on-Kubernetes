@@ -1,0 +1,18 @@
+# Vault sensitive files
+*.token
+*.keys
+keys.json
+unseal_keys.txt
+root_token.txt
+
+# Environment files
+.env
+.env.local
+
+# Docker & Kubernetes
+kind-data
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-db-user-sa
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+      annotations:
+        # Enable Vault Agent Injector
+        vault.hashicorp.com/agent-inject: "true"
+
+        # Vault Kubernetes auth role
+        vault.hashicorp.com/role: "app-db-user"
+
+        # Inject dynamic DB credentials
+        vault.hashicorp.com/agent-inject-secret-db-creds.txt: "database/creds/app-role"
+        vault.hashicorp.com/agent-inject-template-db-creds.txt: |
+          {{- with secret "database/creds/app-role" -}}
+          username={{ .Data.username }}
+          password={{ .Data.password }}
+          {{- end }}
+
+        # Inject KV v2 static secret
+        vault.hashicorp.com/agent-inject-secret-kv-config.txt: "secret/data/app/config"
+        vault.hashicorp.com/agent-inject-template-kv-config.txt: |
+          {{- with secret "secret/data/app/config" -}}
+          api_key={{ .Data.data.api_key }}
+          value={{ .Data.data.value }}
+          {{- end }}
+    spec:
+      serviceAccountName: app-db-user-sa
+      containers:
+        - name: app
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              echo "=== DB CREDS ==="
+              cat /vault/secrets/db-creds.txt
+              echo "=== KV CONFIG ==="
+              cat /vault/secrets/kv-config.txt
+              sleep infinity
+          volumeMounts:
+            - name: vault-secrets
+              mountPath: /vault/secrets
+      volumes:
+        - name: vault-secrets
+          emptyDir:
+            medium: Memory

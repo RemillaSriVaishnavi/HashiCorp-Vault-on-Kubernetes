@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  kind:
+    image: kindest/node:v1.29.0
+    container_name: kind-control-plane
+    privileged: true
+    volumes:
+      - kind-data:/var/lib/docker
+      - ./kind/cluster.yaml:/kind/cluster.yaml
+      - ./k8s:/k8s
+      - ./helm:/helm
+      - ./db:/db
+      - ./app:/app
+    command: >
+      sh -c "
+      kind create cluster --name vault-demo --config /kind/cluster.yaml &&
+      kubectl apply -f /k8s/namespace.yaml &&
+      kubectl apply -f /k8s/serviceaccounts.yaml &&
+      kubectl apply -f /k8s/rbac.yaml &&
+      helm repo add hashicorp https://helm.releases.hashicorp.com &&
+      helm repo update &&
+      helm install vault hashicorp/vault -n vault -f /helm/vault/values.yaml &&
+      kubectl apply -f /db/postgres-deployment.yaml &&
+      kubectl apply -f /app/app-deployment.yaml &&
+      sleep infinity
+      "
+    ports:
+      - "8200:8200"
+
+  vault-setup:
+    image: hashicorp/vault:1.15
+    depends_on:
+      - kind
+    volumes:
+      - ./tests:/tests
+    environment:
+      VAULT_ADDR: http://vault.vault.svc.cluster.local:8200
+    entrypoint: >
+      sh -c "
+      echo 'Waiting for Vault...' &&
+      sleep 60 &&
+      vault status || true &&
+      echo 'Vault setup container ready' &&
+      sleep infinity
+      "
+
+volumes:
+  kind-data:
