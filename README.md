@@ -101,9 +101,11 @@ vault-k8s-ha/
 │   ├── run-all-tests.sh
 │   └── README.md
 ├── vault/
-│   └── policies/
-│       ├── kv-read-policy.hcl
-│       └── db-dynamic-policy.hcl
+│   ├── policies/
+│   │     ├── kv-read-policy.hcl
+│   │     └── db-dynamic-policy.hcl
+│   └── setup.sh 
+│   
 ├── docker-compose.yml
 └── README.md
 

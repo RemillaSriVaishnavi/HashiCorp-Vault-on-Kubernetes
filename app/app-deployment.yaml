@@ -44,15 +44,15 @@ spec:
       containers:
         - name: app
           image: busybox
-          command:
-            - sh
-            - -c
-            - |
-              echo "=== DB CREDS ==="
-              cat /vault/secrets/db-creds.txt
-              echo "=== KV CONFIG ==="
-              cat /vault/secrets/kv-config.txt
-              sleep infinity
+          securityContext:
+            runAsUser: 1000
+            runAsNonRoot: true
+          command: ["/bin/sh"]
+          args:
+             - -c
+             - |
+               chmod +x /app/reload-secrets.sh
+               /app/reload-secrets.sh
           volumeMounts:
             - name: vault-secrets
               mountPath: /vault/secrets
